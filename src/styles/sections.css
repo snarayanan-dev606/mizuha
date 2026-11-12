@@ -1826,13 +1826,13 @@ section {
   transition:
     opacity 0.95s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms),
     transform 1.05s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms),
-    filter 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms) !important;
+    filter 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms);
 }
 
 .sr-ready.sr-heading {
   opacity: 0;
   transform: translate3d(0, 48px, 0) scale(0.97);
-  filter: blur(8px);
+  filter: blur(6px);
 }
 
 .sr-ready.sr-fade-up {
@@ -1844,13 +1844,13 @@ section {
 .sr-ready.sr-fade-scale {
   opacity: 0;
   transform: translate3d(0, 48px, 0) scale(0.92);
-  filter: blur(6px);
+  filter: blur(5px);
 }
 
 .sr-ready.sr-slide-right {
   opacity: 0;
   transform: translate3d(56px, 28px, 0) scale(0.97);
-  filter: blur(6px);
+  filter: blur(5px);
 }
 
 .sr-ready.sr-slide-left {
@@ -1862,13 +1862,13 @@ section {
 .sr-ready.sr-card {
   opacity: 0;
   transform: perspective(1000px) translate3d(0, 64px, 0) rotateX(6deg) scale(0.94);
-  filter: blur(6px);
+  filter: blur(5px);
 }
 
 .sr-ready.sr-visible {
   opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  filter: blur(0px);
+  transform: none;
+  filter: none;
 }
 
 /* Active Story Block Reading Highlight while scrolling beside sticky can */
@@ -1878,29 +1878,51 @@ section {
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5), 0 0 32px rgba(0, 162, 232, 0.14);
 }
 
-/* Mobile Hardware-Accelerated Smooth Scroll Optimizations */
+/* Mobile Hardware-Accelerated 3D Smooth Scroll Optimizations */
 @media (max-width: 768px) {
   .sr-ready {
     will-change: opacity, transform;
     transition:
-      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms),
-      transform 0.65s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms) !important;
+      opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms),
+      transform 1.0s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0ms) !important;
     filter: none !important;
   }
   .sr-ready.sr-card {
-    transform: translate3d(0, 32px, 0) scale(0.97);
+    opacity: 0;
+    transform: perspective(1000px) translate3d(0, 56px, 0) rotateX(6deg) scale(0.94);
+    filter: none !important;
   }
-  .sr-ready.sr-heading,
-  .sr-ready.sr-fade-up,
-  .sr-ready.sr-fade-scale,
-  .sr-ready.sr-slide-right,
+  .sr-ready.sr-heading {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0) scale(0.97);
+    filter: none !important;
+  }
+  .sr-ready.sr-fade-up {
+    opacity: 0;
+    transform: translate3d(0, 48px, 0);
+    filter: none !important;
+  }
+  .sr-ready.sr-fade-scale {
+    opacity: 0;
+    transform: translate3d(0, 44px, 0) scale(0.93);
+    filter: none !important;
+  }
+  .sr-ready.sr-slide-right {
+    opacity: 0;
+    transform: translate3d(40px, 20px, 0) scale(0.97);
+    filter: none !important;
+  }
   .sr-ready.sr-slide-left {
+    opacity: 0;
+    transform: translate3d(-30px, 0, 0);
     filter: none !important;
   }
   .sr-ready.sr-visible {
+    opacity: 1;
+    transform: none;
     filter: none !important;
   }
-  /* Remove heavy GPU multi-pass backdrop-filter blur on mobile cards to keep 60/120fps fluid */
+  /* Keep mobile card backgrounds clean and fast */
   .story-block,
   .pillar-card,
   .fact-card,

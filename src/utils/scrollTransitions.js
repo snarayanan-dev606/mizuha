@@ -233,8 +233,7 @@ export const useScrollReveals = (deps = []) => {
     const trackedElements = [];
 
     const registerElement = (el, variant, delayMs, onceInSession = false) => {
-      if (!el || el.dataset.srBound === 'true') return;
-      if (onceInSession && el.dataset.srPlayed === 'true') return;
+      if (!el) return;
 
       el.dataset.srBound = 'true';
       el.dataset.srVariant = variant;
@@ -244,6 +243,8 @@ export const useScrollReveals = (deps = []) => {
       }
       el.style.setProperty('--sr-delay', `${delayMs}ms`);
       el.classList.add('sr-ready', variant);
+      // Reset visible state so tab and route traversals animate freshly
+      el.classList.remove('sr-visible');
       trackedElements.push(el);
     };
 
@@ -278,46 +279,15 @@ export const useScrollReveals = (deps = []) => {
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
 
-    const timers = new Map();
-
     const revealElement = (el) => {
       if (!el || el.classList.contains('sr-visible')) return;
-      if (timers.has(el)) {
-        clearTimeout(timers.get(el));
-        timers.delete(el);
-      }
-
-      if (!el.classList.contains('sr-ready') && el.dataset.srVariant) {
-        const delayMs = el.dataset.srDelay || '0';
-        el.style.setProperty('--sr-delay', `${delayMs}ms`);
-        el.classList.add('sr-ready', el.dataset.srVariant);
-      }
-
       el.classList.add('sr-visible');
       el.dataset.srPlayed = 'true';
-
-      const delayVal = parseInt(el.dataset.srDelay || '0', 10) || 0;
-      const timerId = window.setTimeout(() => {
-        // Release sr-ready once settled so native CSS :hover transforms work with zero conflict
-        el.classList.remove(...ALL_SR_CLASSES);
-        el.style.removeProperty('--sr-delay');
-        timers.delete(el);
-      }, delayVal + 1150);
-      timers.set(el, timerId);
     };
 
-    const rearmIfBelowViewport = (el, vh) => {
-      if (!el || el.dataset.srOnce === 'true' || !el.dataset.srVariant) return;
-      const rect = el.getBoundingClientRect();
-      if (rect.top > vh + 50 && el.classList.contains('sr-ready') === false) {
-        if (timers.has(el)) {
-          clearTimeout(timers.get(el));
-          timers.delete(el);
-        }
-        el.style.setProperty('--sr-delay', `${el.dataset.srDelay || '0'}ms`);
-        el.classList.add('sr-ready', el.dataset.srVariant);
-        observer.observe(el);
-      }
+    const rearmElement = (el) => {
+      if (!el || el.dataset.srOnce === 'true' || !el.classList.contains('sr-visible')) return;
+      el.classList.remove('sr-visible');
     };
 
     const observer = new IntersectionObserver(
@@ -325,13 +295,18 @@ export const useScrollReveals = (deps = []) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             revealElement(entry.target);
-            observer.unobserve(entry.target);
+          } else {
+            // Re-arm elements scrolled below viewport so scrolling back triggers clean 3D entrance
+            const top = entry.boundingClientRect.top;
+            if (top > (window.innerHeight || 800) + 40 && entry.target.dataset.srOnce !== 'true') {
+              rearmElement(entry.target);
+            }
           }
         });
       },
       {
-        threshold: 0.14,
-        rootMargin: '0px 0px -10% 0px'
+        threshold: 0.12,
+        rootMargin: '0px 0px -5% 0px'
       }
     );
 
@@ -339,14 +314,14 @@ export const useScrollReveals = (deps = []) => {
       const candidates = document.querySelectorAll('.sr-ready');
       const vh = window.innerHeight || document.documentElement.clientHeight;
 
-      candidates.forEach((el) => {
+      candidates.forEach((el, index) => {
         const rect = el.getBoundingClientRect();
-        if (rect.top < vh * 0.88 && rect.bottom > 0) {
+        if (rect.top < vh * 0.90 && rect.bottom > 0) {
+          // Stagger reveals cleanly for elements visible upon tab/section arrival
+          const delayVal = parseInt(el.dataset.srDelay || '0', 10) || (index * 75);
           window.setTimeout(() => {
             requestAnimationFrame(() => revealElement(el));
-          }, 50);
-        } else if (rect.bottom <= 0) {
-          revealElement(el);
+          }, Math.min(delayVal, 350));
         } else {
           observer.observe(el);
         }
