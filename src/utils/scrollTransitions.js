@@ -286,7 +286,7 @@ export const useScrollReveals = (deps = []) => {
     };
 
     const rearmElement = (el) => {
-      if (!el || el.dataset.srOnce === 'true' || !el.classList.contains('sr-visible')) return;
+      if (!el || el.dataset.srOnce === 'true' || !el.classList.contains('sr-visible') || el.closest('.isolated-section-container')) return;
       el.classList.remove('sr-visible');
     };
 
@@ -316,12 +316,16 @@ export const useScrollReveals = (deps = []) => {
 
       candidates.forEach((el, index) => {
         const rect = el.getBoundingClientRect();
-        if (rect.top < vh * 0.90 && rect.bottom > 0) {
+        const isInIsolatedContainer = el.closest('.isolated-section-container');
+
+        if ((rect.top < vh * 0.90 && rect.bottom > 0) || (isInIsolatedContainer && rect.top < vh * 1.35)) {
           // Stagger reveals cleanly for elements visible upon tab/section arrival
           const delayVal = parseInt(el.dataset.srDelay || '0', 10) || (index * 75);
           window.setTimeout(() => {
             requestAnimationFrame(() => revealElement(el));
           }, Math.min(delayVal, 350));
+        } else if (rect.bottom <= 0) {
+          revealElement(el);
         } else {
           observer.observe(el);
         }
@@ -356,6 +360,7 @@ export const useScrollReveals = (deps = []) => {
     // Reveal transitions are handled asynchronously by IntersectionObserver with zero scroll jank.
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     let parallaxRaf = null;
+    let scheduleParallax = null;
 
     if (!isMobile) {
       const updateScrollEffects = () => {
@@ -422,7 +427,7 @@ export const useScrollReveals = (deps = []) => {
         }
       };
 
-      const scheduleParallax = () => {
+      scheduleParallax = () => {
         if (parallaxRaf === null) {
           parallaxRaf = requestAnimationFrame(updateScrollEffects);
         }
@@ -435,7 +440,7 @@ export const useScrollReveals = (deps = []) => {
     return () => {
       cancelAnimationFrame(startRaf);
       if (parallaxRaf !== null) cancelAnimationFrame(parallaxRaf);
-      if (!isMobile) {
+      if (scheduleParallax) {
         window.removeEventListener('scroll', scheduleParallax);
       }
       observer.disconnect();
