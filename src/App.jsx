@@ -15,7 +15,6 @@ import { initSmoothScrolling, useScrollReveals } from './utils/scrollTransitions
  * editorial story, and gateway to dedicated pages (Why MIZUHA, Contact).
  */
 export const App = () => {
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeroRevealed, setIsHeroRevealed] = useState(false);
   const [isNavRevealed, setIsNavRevealed] = useState(false);
@@ -25,8 +24,7 @@ export const App = () => {
   // Initialize Lenis Smooth Scrolling and scroll listeners
   useEffect(() => {
     return initSmoothScrolling({
-      onScroll: ({ scrollTop, progress, isScrolled: scrolled }) => {
-        setScrollProgress(progress);
+      onScroll: ({ scrollTop, isScrolled: scrolled }) => {
         setIsScrolled(scrolled);
 
         // If visitor scrolls down before video completes, reveal interface
@@ -189,7 +187,7 @@ export const App = () => {
     <>
       {/* Ambient Visual Layers */}
       <AmbientCanvas />
-      <div id="scroll-progress" style={{ width: `${scrollProgress}%` }} aria-hidden="true" />
+      <div id="scroll-progress" aria-hidden="true" />
 
       {/* Navigation Bar */}
       <Navigation 

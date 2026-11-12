@@ -33,7 +33,6 @@ export const WhyMizuhaApp = ({ initialSection }) => {
   };
 
   const [activeTab, setActiveTab] = useState(getTabFromUrl);
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Synchronize on hashchange
@@ -51,8 +50,7 @@ export const WhyMizuhaApp = ({ initialSection }) => {
   // Initialize Lenis Smooth Scrolling once and track progress
   useEffect(() => {
     return initSmoothScrolling({
-      onScroll: ({ progress, isScrolled: scrolled }) => {
-        setScrollProgress(progress);
+      onScroll: ({ isScrolled: scrolled }) => {
         setIsScrolled(scrolled);
       }
     });
@@ -97,7 +95,7 @@ export const WhyMizuhaApp = ({ initialSection }) => {
   return (
     <>
       <AmbientCanvas />
-      <div id="scroll-progress" style={{ width: `${scrollProgress}%` }} aria-hidden="true" />
+      <div id="scroll-progress" aria-hidden="true" />
 
       {/* Navigation */}
       <Navigation 

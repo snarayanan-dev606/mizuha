@@ -7,14 +7,18 @@ import { useEffect, useLayoutEffect } from 'react';
 export const initSmoothScrolling = ({ onScroll } = {}) => {
   let lenis = null;
   let rafId = null;
+  let lastIsScrolled = false;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  if (window.Lenis) {
+  // On desktop, initialize Lenis for smooth mouse wheel easing.
+  // On mobile touch devices, use native hardware-accelerated momentum scroll.
+  if (window.Lenis && !isMobile) {
     lenis = new window.Lenis({
-      duration: 1.35,
+      duration: 1.25,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       smoothTouch: false,
-      wheelMultiplier: 0.9
+      wheelMultiplier: 0.95
     });
     window.__lenis = lenis;
 
@@ -29,14 +33,30 @@ export const initSmoothScrolling = ({ onScroll } = {}) => {
     rafId = requestAnimationFrame(raf);
   }
 
+  let scrollTicking = false;
   const handleScroll = () => {
-    const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+    if (scrollTicking) return;
+    scrollTicking = true;
+    requestAnimationFrame(() => {
+      scrollTicking = false;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
 
-    if (onScroll) {
-      onScroll({ scrollTop, progress, isScrolled: scrollTop > 60 });
-    }
+      // Update progress bar directly without React re-renders
+      const bar = document.getElementById('scroll-progress');
+      if (bar) {
+        bar.style.width = `${progress}%`;
+      }
+
+      const scrolled = scrollTop > 60;
+      if (scrolled !== lastIsScrolled || (scrollTop > 40 && onScroll)) {
+        lastIsScrolled = scrolled;
+        if (onScroll) {
+          onScroll({ scrollTop, progress, isScrolled: scrolled });
+        }
+      }
+    });
   };
 
   window.addEventListener('scroll', handleScroll, { passive: true });
@@ -357,98 +377,92 @@ export const useScrollReveals = (deps = []) => {
       storyBlocks.forEach((b) => activeObserver.observe(b));
     }
 
-    // Native 60fps scroll-scrubbed parallax + fallback reveal/re-arm check
+    // On mobile touch devices, skip JS scroll-scrubbed parallax to prevent layout thrashing and maintain 60/120fps.
+    // Reveal transitions are handled asynchronously by IntersectionObserver with zero scroll jank.
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     let parallaxRaf = null;
-    const updateScrollEffects = () => {
-      parallaxRaf = null;
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
 
-      // Reveal entering elements & re-arm non-sticky elements scrolled far off the bottom
-      document.querySelectorAll('[data-sr-bound="true"]').forEach((el) => {
-        if (el.classList.contains('sr-ready') && !el.classList.contains('sr-visible')) {
-          const rect = el.getBoundingClientRect();
-          if (rect.top < vh * 0.88) {
-            revealElement(el);
-            observer.unobserve(el);
+    if (!isMobile) {
+      const updateScrollEffects = () => {
+        parallaxRaf = null;
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
+        // Continuous parallax: Hero editorial lift & fade as user scrolls down
+        const heroEl = document.getElementById('hero');
+        const heroCopy = document.getElementById('hero-copy-overlay');
+        const heroVideoWrap = document.getElementById('hero-video-container');
+        if (heroEl && heroCopy) {
+          const heroHeight = heroEl.offsetHeight || vh;
+          const progress = Math.min(1, Math.max(0, scrollY / (heroHeight * 0.75)));
+          if (heroCopy.classList.contains('revealed')) {
+            heroCopy.style.transform = `translate3d(0, ${-progress * 70}px, 0)`;
+            heroCopy.style.opacity = `${Math.max(0, 1 - progress * 1.25)}`;
           }
-        } else {
-          rearmIfBelowViewport(el, vh);
+          if (heroVideoWrap) {
+            heroVideoWrap.style.transform = `scale(${1 + progress * 0.08})`;
+            heroVideoWrap.style.opacity = `${Math.max(0.15, 1 - progress * 0.85)}`;
+          }
         }
-      });
 
-      // Continuous parallax: Hero editorial lift & fade as user scrolls down
-      const heroEl = document.getElementById('hero');
-      const heroCopy = document.getElementById('hero-copy-overlay');
-      const heroVideoWrap = document.getElementById('hero-video-container');
-      if (heroEl && heroCopy) {
-        const heroHeight = heroEl.offsetHeight || vh;
-        const progress = Math.min(1, Math.max(0, scrollY / (heroHeight * 0.75)));
-        if (heroCopy.classList.contains('revealed')) {
-          heroCopy.style.transform = `translate3d(0, ${-progress * 70}px, 0)`;
-          heroCopy.style.opacity = `${Math.max(0, 1 - progress * 1.25)}`;
+        // Continuous parallax: Product Can & Halo float while scrolling
+        const productVisual = document.querySelector('.product-card-visual');
+        if (productVisual) {
+          const rect = productVisual.getBoundingClientRect();
+          const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
+          const clamped = Math.max(-1, Math.min(1, centerOffset));
+          const img = productVisual.querySelector('.product-featured-img');
+          const halo = productVisual.querySelector('.product-halo');
+          if (img) {
+            img.style.transform = `translate3d(0, ${clamped * -30}px, 0)`;
+          }
+          if (halo) {
+            halo.style.transform = `translate3d(0, ${clamped * 25}px, 0) scale(${1.05 - Math.abs(clamped) * 0.15})`;
+          }
         }
-        if (heroVideoWrap) {
-          heroVideoWrap.style.transform = `scale(${1 + progress * 0.08})`;
-          heroVideoWrap.style.opacity = `${Math.max(0.15, 1 - progress * 0.85)}`;
-        }
-      }
 
-      // Continuous parallax: Product Can & Halo float while scrolling
-      const productVisual = document.querySelector('.product-card-visual');
-      if (productVisual) {
-        const rect = productVisual.getBoundingClientRect();
-        const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
-        const clamped = Math.max(-1, Math.min(1, centerOffset));
-        const img = productVisual.querySelector('.product-featured-img');
-        const halo = productVisual.querySelector('.product-halo');
-        if (img) {
-          img.style.transform = `translate3d(0, ${clamped * -30}px, 0)`;
+        // Continuous parallax: Purification diagram subtle zoom & vertical glide
+        const graphicCard = document.querySelector('.purification-graphic-card');
+        if (graphicCard) {
+          const rect = graphicCard.getBoundingClientRect();
+          const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
+          const clamped = Math.max(-1, Math.min(1, centerOffset));
+          const img = graphicCard.querySelector('.purification-img');
+          if (img) {
+            img.style.transform = `translate3d(0, ${clamped * -16}px, 0) scale(${1.04 - Math.abs(clamped) * 0.04})`;
+          }
         }
-        if (halo) {
-          halo.style.transform = `translate3d(0, ${clamped * 25}px, 0) scale(${1.05 - Math.abs(clamped) * 0.15})`;
+
+        // Continuous parallax: Final Statement ambient glow expansion
+        const statementSection = document.querySelector('.final-statement-section');
+        if (statementSection) {
+          const rect = statementSection.getBoundingClientRect();
+          const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
+          const clamped = Math.max(-1, Math.min(1, centerOffset));
+          const glow = statementSection.querySelector('.statement-ambient-glow');
+          if (glow) {
+            glow.style.transform = `translate(-50%, -50%) scale(${1.15 - Math.abs(clamped) * 0.3})`;
+            glow.style.opacity = `${Math.max(0.25, 0.9 - Math.abs(clamped) * 0.55)}`;
+          }
         }
-      }
+      };
 
-      // Continuous parallax: Purification diagram subtle zoom & vertical glide
-      const graphicCard = document.querySelector('.purification-graphic-card');
-      if (graphicCard) {
-        const rect = graphicCard.getBoundingClientRect();
-        const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
-        const clamped = Math.max(-1, Math.min(1, centerOffset));
-        const img = graphicCard.querySelector('.purification-img');
-        if (img) {
-          img.style.transform = `translate3d(0, ${clamped * -16}px, 0) scale(${1.04 - Math.abs(clamped) * 0.04})`;
+      const scheduleParallax = () => {
+        if (parallaxRaf === null) {
+          parallaxRaf = requestAnimationFrame(updateScrollEffects);
         }
-      }
+      };
 
-      // Continuous parallax: Final Statement ambient glow expansion
-      const statementSection = document.querySelector('.final-statement-section');
-      if (statementSection) {
-        const rect = statementSection.getBoundingClientRect();
-        const centerOffset = (rect.top + rect.height / 2 - vh / 2) / vh;
-        const clamped = Math.max(-1, Math.min(1, centerOffset));
-        const glow = statementSection.querySelector('.statement-ambient-glow');
-        if (glow) {
-          glow.style.transform = `translate(-50%, -50%) scale(${1.15 - Math.abs(clamped) * 0.3})`;
-          glow.style.opacity = `${Math.max(0.25, 0.9 - Math.abs(clamped) * 0.55)}`;
-        }
-      }
-    };
-
-    const scheduleParallax = () => {
-      if (parallaxRaf === null) {
-        parallaxRaf = requestAnimationFrame(updateScrollEffects);
-      }
-    };
-
-    window.addEventListener('scroll', scheduleParallax, { passive: true });
-    scheduleParallax();
+      window.addEventListener('scroll', scheduleParallax, { passive: true });
+      scheduleParallax();
+    }
 
     return () => {
       cancelAnimationFrame(startRaf);
       if (parallaxRaf !== null) cancelAnimationFrame(parallaxRaf);
-      window.removeEventListener('scroll', scheduleParallax);
+      if (!isMobile) {
+        window.removeEventListener('scroll', scheduleParallax);
+      }
       timers.forEach((id) => clearTimeout(id));
       timers.clear();
       observer.disconnect();
