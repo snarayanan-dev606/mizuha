@@ -438,8 +438,6 @@ export const useScrollReveals = (deps = []) => {
       if (!isMobile) {
         window.removeEventListener('scroll', scheduleParallax);
       }
-      timers.forEach((id) => clearTimeout(id));
-      timers.clear();
       observer.disconnect();
       if (activeObserver) activeObserver.disconnect();
     };
