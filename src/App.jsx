@@ -23,34 +23,30 @@ export const App = () => {
 
   // Initialize Lenis Smooth Scrolling and scroll listeners
   useEffect(() => {
+    // Ensure initial entry and reload always start at top to play intro video
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
+    // Clean any lingering hash on entry so the intro film always plays
+    if (window.location.hash) {
+      const cleanPath = window.location.pathname.endsWith('index.html') 
+        ? window.location.pathname 
+        : (window.location.pathname ? window.location.pathname : 'index.html');
+      window.history.replaceState(null, '', cleanPath);
+    }
+
     return initSmoothScrolling({
       onScroll: ({ scrollTop, isScrolled: scrolled }) => {
         setIsScrolled(scrolled);
 
-        // If visitor scrolls down before video completes, reveal interface
-        if (scrollTop > 40 && !hasTriggeredRef.current) {
+        // If visitor explicitly scrolls down before video completes, reveal interface
+        if (scrollTop > 80 && !hasTriggeredRef.current) {
           handleVideoEndReached();
         }
       }
     });
-  }, []);
-
-  // Handle direct navigation to #story (e.g. clicking Why MIZUHA from another page)
-  useEffect(() => {
-    if (window.location.hash === '#story') {
-      handleVideoEndReached();
-      const timer = setTimeout(() => {
-        const storyEl = document.getElementById('story');
-        if (storyEl) {
-          if (window.__lenis) {
-            window.__lenis.scrollTo(storyEl, { offset: -70, duration: 1.0 });
-          } else {
-            storyEl.scrollIntoView({ behavior: 'smooth' });
-          }
-        }
-      }, 400);
-      return () => clearTimeout(timer);
-    }
   }, []);
 
   // Choreographed Scroll Transitions & Continuous Parallax
@@ -212,6 +208,7 @@ export const App = () => {
         activePage="home"
         isScrolled={isScrolled} 
         isNavRevealed={isNavRevealed} 
+        onSelectStory={() => handleVideoEndReached()}
       />
 
       {/* Main Website Sections */}

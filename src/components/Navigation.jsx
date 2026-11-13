@@ -10,7 +10,8 @@ export const Navigation = ({
   isNavRevealed, 
   activePage = 'home',
   activeTab = '',
-  onSelectTab = null 
+  onSelectTab = null,
+  onSelectStory = null
 }) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -36,7 +37,7 @@ export const Navigation = ({
       return hash ? `#${hash}` : '#';
     }
     const pageHtml = page === 'home' ? 'index.html' : `${page}.html`;
-    return hash ? `${pageHtml}#${hash}` : pageHtml;
+    return page === 'home' && hash === 'story' ? 'index.html' : (hash ? `${pageHtml}#${hash}` : pageHtml);
   };
 
   const handleLinkClick = (e, page, hash = '') => {
@@ -61,6 +62,9 @@ export const Navigation = ({
     // In-page smooth scroll to section (e.g. clicking Why MIZUHA / Story when already on home page)
     if (activePage === page && hash) {
       e.preventDefault();
+      if (onSelectStory) {
+        onSelectStory();
+      }
       const targetEl = document.getElementById(hash);
       if (targetEl) {
         if (window.__lenis) {

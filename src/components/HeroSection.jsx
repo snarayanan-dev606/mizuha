@@ -15,6 +15,13 @@ export const HeroSection = ({ onVideoEndReached, isHeroRevealed, onReplay }) => 
     const video = videoRef.current;
     if (!video) return;
 
+    // Explicitly guarantee intro video starts from 0 on initial page entry
+    video.currentTime = 0;
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {});
+    }
+
     const handleTimeUpdate = () => {
       // Trigger smooth emergence reveal at the final shot of the film
       if (video.duration && video.currentTime >= video.duration - 0.28) {
