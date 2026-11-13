@@ -14,11 +14,11 @@ export const initSmoothScrolling = ({ onScroll } = {}) => {
   // On mobile touch devices, use native hardware-accelerated momentum scroll.
   if (window.Lenis && !isMobile) {
     lenis = new window.Lenis({
-      duration: 1.25,
+      duration: 0.85,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       smoothTouch: false,
-      wheelMultiplier: 0.95
+      wheelMultiplier: 1.0
     });
     window.__lenis = lenis;
 
@@ -114,13 +114,6 @@ const SINGLE_REVEAL_RULES = [
 ];
 
 const STAGGER_GROUP_RULES = [
-  {
-    container: '.section-selector-bar',
-    items: '.section-tag, h1, p, [role="tab"]',
-    variant: 'sr-heading',
-    staggerMs: 85,
-    onceInSession: true
-  },
   {
     container: '.story-header-centered',
     items: '.section-tag, .story-main-heading, .story-lead-centered, .story-verse-box',
@@ -235,6 +228,11 @@ export const useScrollReveals = (deps = []) => {
     const registerElement = (el, variant, delayMs, onceInSession = false) => {
       if (!el) return;
 
+      if (onceInSession && el.dataset.srPlayed === 'true') {
+        // Element already revealed and flagged onceInSession (e.g. selector bar)
+        return;
+      }
+
       el.dataset.srBound = 'true';
       el.dataset.srVariant = variant;
       el.dataset.srDelay = `${delayMs}`;
@@ -265,6 +263,9 @@ export const useScrollReveals = (deps = []) => {
 
     return () => {
       trackedElements.forEach((el) => {
+        if (el.dataset.srOnce === 'true' && el.dataset.srPlayed === 'true') {
+          return; // Keep persistent onceInSession elements visible
+        }
         el.classList.remove(...ALL_SR_CLASSES);
         el.style.removeProperty('--sr-delay');
         delete el.dataset.srBound;
@@ -314,16 +315,15 @@ export const useScrollReveals = (deps = []) => {
       const candidates = document.querySelectorAll('.sr-ready');
       const vh = window.innerHeight || document.documentElement.clientHeight;
 
-      candidates.forEach((el, index) => {
+      candidates.forEach((el) => {
         const rect = el.getBoundingClientRect();
-        const isInIsolatedContainer = el.closest('.isolated-section-container');
+        const isInIsolatedContainer = Boolean(el.closest('.isolated-section-container'));
 
-        if ((rect.top < vh * 0.90 && rect.bottom > 0) || (isInIsolatedContainer && rect.top < vh * 1.35)) {
-          // Stagger reveals cleanly for elements visible upon tab/section arrival
-          const delayVal = parseInt(el.dataset.srDelay || '0', 10) || (index * 75);
-          window.setTimeout(() => {
-            requestAnimationFrame(() => revealElement(el));
-          }, Math.min(delayVal, 350));
+        if (isInIsolatedContainer) {
+          // Inside the active section view: reveal immediately to let CSS --sr-delay drive the stagger
+          revealElement(el);
+        } else if (rect.top < vh * 0.92 && rect.bottom > 0) {
+          revealElement(el);
         } else if (rect.bottom <= 0) {
           revealElement(el);
         } else {
@@ -376,12 +376,11 @@ export const useScrollReveals = (deps = []) => {
           const heroHeight = heroEl.offsetHeight || vh;
           const progress = Math.min(1, Math.max(0, scrollY / (heroHeight * 0.75)));
           if (heroCopy.classList.contains('revealed')) {
-            heroCopy.style.transform = `translate3d(0, ${-progress * 70}px, 0)`;
+            heroCopy.style.transform = `translate3d(0, ${-progress * 50}px, 0)`;
             heroCopy.style.opacity = `${Math.max(0, 1 - progress * 1.25)}`;
           }
           if (heroVideoWrap) {
-            heroVideoWrap.style.transform = `scale(${1 + progress * 0.08})`;
-            heroVideoWrap.style.opacity = `${Math.max(0.15, 1 - progress * 0.85)}`;
+            heroVideoWrap.style.opacity = `${Math.max(0.12, 1 - progress * 0.85)}`;
           }
         }
 

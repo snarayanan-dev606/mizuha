@@ -27,29 +27,50 @@ export const AmbientCanvas = () => {
     window.addEventListener('resize', handleResize);
 
     const particles = [];
-    const count = window.innerWidth < 768 ? 35 : 85;
+    const count = window.innerWidth < 768 ? 16 : 40;
     for (let i = 0; i < count; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        radius: Math.random() * 1.8 + 0.4,
-        speedY: Math.random() * 0.45 + 0.15,
-        speedX: (Math.random() - 0.5) * 0.3,
-        alpha: Math.random() * 0.6 + 0.2,
-        blue: Math.random() > 0.6
+        radius: Math.random() * 1.5 + 0.4,
+        speedY: Math.random() * 0.35 + 0.1,
+        speedX: (Math.random() - 0.5) * 0.2,
+        blue: Math.random() > 0.65
       });
     }
 
+    // High performance batched rendering: single path for blue, single path for white
     const render = () => {
-      ctx.clearRect(0, 0, width, height);
-      for (let p of particles) {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.blue 
-          ? `rgba(0, 162, 232, ${p.alpha * 0.7})` 
-          : `rgba(240, 246, 255, ${p.alpha * 0.4})`;
-        ctx.fill();
+      if (document.hidden) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
 
+      ctx.clearRect(0, 0, width, height);
+
+      // 1. Blue particle batch (1 path, 1 fill)
+      ctx.fillStyle = 'rgba(0, 162, 232, 0.45)';
+      ctx.beginPath();
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (p.blue) {
+          ctx.moveTo(p.x + p.radius, p.y);
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        }
+      }
+      ctx.fill();
+
+      // 2. White particle batch (1 path, 1 fill)
+      ctx.fillStyle = 'rgba(240, 246, 255, 0.32)';
+      ctx.beginPath();
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        if (!p.blue) {
+          ctx.moveTo(p.x + p.radius, p.y);
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        }
+
+        // Advance positions
         p.y -= p.speedY;
         p.x += p.speedX;
 
@@ -60,6 +81,8 @@ export const AmbientCanvas = () => {
         if (p.x < 0) p.x = width;
         if (p.x > width) p.x = 0;
       }
+      ctx.fill();
+
       animId = requestAnimationFrame(render);
     };
     render();

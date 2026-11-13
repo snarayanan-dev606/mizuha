@@ -31,8 +31,7 @@ export const Footer = () => {
             <h4 className="footer-col-title">Product &amp; Science</h4>
             <ul className="footer-links-list">
               <li><a href="index.html">Home</a></li>
-              <li><a href="index.html#story">Our Story</a></li>
-              <li><a href="why-mizuha.html">Why MIZUHA</a></li>
+              <li><a href="index.html#story">Why MIZUHA</a></li>
               <li><a href="why-mizuha.html#philosophy">Our Philosophy</a></li>
               <li><a href="why-mizuha.html#purification">Six-Stage Purification</a></li>
               <li><a href="why-mizuha.html#product">Can Specification (330ml)</a></li>

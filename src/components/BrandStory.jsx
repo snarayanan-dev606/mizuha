@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { SectionTag } from './common/SectionTag';
 
 /**
@@ -7,6 +7,33 @@ import { SectionTag } from './common/SectionTag';
  * and pure black (#000000) background exactly matching the tin video footage seamlessly.
  */
 export const BrandStory = () => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // High performance: only play and decode showcase video when approaching viewport
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      {
+        threshold: 0.05,
+        rootMargin: '200px 0px 200px 0px'
+      }
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section className="brand-story-section" id="story">
       
@@ -41,13 +68,13 @@ export const BrandStory = () => {
             <div className="story-video-col">
               <div className="story-video-frame">
                 <video 
+                  ref={videoRef}
                   id="story-can-video" 
                   className="story-video-element" 
-                  autoPlay 
                   muted 
                   loop 
                   playsInline 
-                  preload="auto"
+                  preload="metadata"
                   aria-label="MIZUHA 300ml Canned Water Showcase Film"
                 >
                   <source src="./assets/mizuha-can-showcase.mp4" type="video/mp4" />

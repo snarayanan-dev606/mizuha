@@ -6,7 +6,6 @@ import Purification from '../components/Purification';
 import ProductExperience from '../components/ProductExperience';
 import Commitment from '../components/Commitment';
 import Footer from '../components/Footer';
-import { SectionTag } from '../components/common/SectionTag';
 import { initSmoothScrolling, smoothScrollTo, useScrollReveals } from '../utils/scrollTransitions';
 
 /**
@@ -29,7 +28,7 @@ export const WhyMizuhaApp = ({ initialSection }) => {
     for (const tab of validTabs) {
       if (path.includes(tab)) return tab;
     }
-    return 'philosophy';
+    return 'why-mizuha';
   };
 
   const [activeTab, setActiveTab] = useState(getTabFromUrl);
@@ -61,36 +60,17 @@ export const WhyMizuhaApp = ({ initialSection }) => {
 
   const switchTab = (tabId) => {
     setActiveTab(tabId);
-    window.location.hash = `#${tabId}`;
-    smoothScrollTo(0, { duration: 0.9 });
-  };
-
-  const tabsMeta = [
-    {
-      id: 'philosophy',
-      num: '01',
-      label: 'Philosophy',
-      sub: 'Pure Origin & Purpose'
-    },
-    {
-      id: 'purification',
-      num: '02',
-      label: 'Purification',
-      sub: '6-Stage Cascade'
-    },
-    {
-      id: 'product',
-      num: '03',
-      label: 'The Product',
-      sub: '330ml Can Specs'
-    },
-    {
-      id: 'commitment',
-      num: '04',
-      label: 'Commitment',
-      sub: 'Sequenced Compliance'
+    if (window.history && window.history.replaceState) {
+      if (tabId === 'why-mizuha') {
+        window.history.replaceState(null, '', 'why-mizuha.html');
+      } else {
+        window.history.replaceState(null, '', `#${tabId}`);
+      }
+    } else {
+      window.location.hash = tabId === 'why-mizuha' ? '' : `#${tabId}`;
     }
-  ];
+    smoothScrollTo(0, { duration: 0.6 });
+  };
 
   return (
     <>
@@ -107,60 +87,9 @@ export const WhyMizuhaApp = ({ initialSection }) => {
       />
 
       <main style={{ paddingTop: '5.5rem' }}>
-        {/* Editorial Sub-Navigation Bar for Distinct Section Selection */}
-        <section className="section-selector-bar">
-          <div className="content-container">
-            <div className="section-selector-header">
-              <SectionTag>Separate Section Explorer</SectionTag>
-              <h1 className="serif-display section-selector-title">
-                Why MIZUHA
-              </h1>
-              <p className="section-selector-desc">
-                Select a specific section below to explore its details individually without scrolling through everything at once.
-              </p>
-            </div>
-
-            {/* Prominent Tab Switcher Cards */}
-            <div 
-              role="tablist" 
-              aria-label="Why MIZUHA Sections"
-              className="section-tablist"
-            >
-              {tabsMeta.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => switchTab(tab.id)}
-                    type="button"
-                    className={`section-tab-card ${isActive ? 'active' : ''}`}
-                  >
-                    <div className="section-tab-top">
-                      <span className="section-tab-num">
-                        {tab.num}
-                      </span>
-                      {isActive && (
-                        <span className="section-tab-indicator" />
-                      )}
-                    </div>
-                    <div className="section-tab-label">
-                      {tab.label}
-                    </div>
-                    <div className="section-tab-sub">
-                      {tab.sub}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* ONLY THE SELECTED SECTION IS RENDERED — NO LONG UNWANTED SCROLL */}
+        {/* ONLY THE SELECTED SECTION IS RENDERED — NO REDUNDANT TITLE OR UNWANTED SCROLL */}
         <div className="isolated-section-container" style={{ minHeight: '65vh' }}>
-          {activeTab === 'philosophy' && (
+          {(activeTab === 'philosophy' || activeTab === 'why-mizuha') && (
             <div className="tab-pane-fade" key="philosophy">
               <Philosophy />
             </div>

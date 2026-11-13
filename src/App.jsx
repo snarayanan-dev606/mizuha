@@ -35,6 +35,24 @@ export const App = () => {
     });
   }, []);
 
+  // Handle direct navigation to #story (e.g. clicking Why MIZUHA from another page)
+  useEffect(() => {
+    if (window.location.hash === '#story') {
+      handleVideoEndReached();
+      const timer = setTimeout(() => {
+        const storyEl = document.getElementById('story');
+        if (storyEl) {
+          if (window.__lenis) {
+            window.__lenis.scrollTo(storyEl, { offset: -70, duration: 1.0 });
+          } else {
+            storyEl.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   // Choreographed Scroll Transitions & Continuous Parallax
   useScrollReveals();
 

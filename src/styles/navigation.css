@@ -4,10 +4,7 @@
   top: 0;
   left: 0;
   width: 100%;
-  padding: 1.75rem 5vw;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding: 1.25rem 5vw;
   z-index: 100;
   transition: padding 0.4s ease, background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease;
   border-bottom: 1px solid transparent;
@@ -15,11 +12,22 @@
 }
 
 .site-nav.scrolled {
-  padding: 1rem 5vw;
-  background: rgba(7, 9, 12, 0.92);
+  padding: 0.85rem 5vw;
+  background: rgba(7, 9, 12, 0.94);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom-color: var(--border-light);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+}
+
+.site-nav-container {
+  width: 100%;
+  max-width: 1380px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .nav-brand {
@@ -31,6 +39,7 @@
   transform: translateY(0);
   filter: none;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .nav-logo-img {
@@ -43,6 +52,7 @@
 .nav-brand-text {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .nav-brand-name {
@@ -50,8 +60,10 @@
   font-size: 1.15rem;
   font-weight: 700;
   letter-spacing: 0.28em;
+  margin-right: -0.28em;
   color: #ffffff;
   text-transform: uppercase;
+  line-height: 1.1;
 }
 
 .nav-brand-sub {
@@ -59,13 +71,18 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 0.15rem;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 2.75rem;
+  gap: clamp(1rem, 1.8vw, 2.2rem);
   list-style: none;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
 }
 
 .nav-links li {
@@ -73,6 +90,8 @@
   transform: translateY(0);
   filter: none;
   transition: opacity 0.3s ease, transform 0.3s ease;
+  display: flex;
+  align-items: center;
 }
 
 .nav-link {
@@ -85,6 +104,8 @@
   position: relative;
   padding: 0.35rem 0;
   transition: color 0.3s ease;
+  display: inline-block;
+  line-height: 1.2;
 }
 
 .nav-link.active {
@@ -114,6 +135,7 @@
 .nav-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.6rem;
   padding: 0.65rem 1.4rem;
   border: 1px solid var(--border-light);
@@ -129,6 +151,9 @@
   opacity: 1;
   transform: translateY(0);
   filter: none;
+  flex-shrink: 0;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .nav-cta:hover {
@@ -150,6 +175,8 @@
   transform: translateY(0);
   filter: none;
   z-index: 101;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Only hide navbar content during the initial home video intro before reveal */

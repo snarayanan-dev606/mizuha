@@ -29,11 +29,28 @@ export const HeroSection = ({ onVideoEndReached, isHeroRevealed, onReplay }) => 
     video.addEventListener('timeupdate', handleTimeUpdate);
     video.addEventListener('ended', handleEnded);
 
+    // Pause hero video when scrolled out of view to free up GPU decoder and prevent lag
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            video.pause();
+          } else if (!isHeroRevealed) {
+            video.play().catch(() => {});
+          }
+        });
+      },
+      { threshold: 0.02 }
+    );
+
+    observer.observe(video);
+
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('ended', handleEnded);
+      observer.disconnect();
     };
-  }, [onVideoEndReached]);
+  }, [onVideoEndReached, isHeroRevealed]);
 
   const handleReplayClick = () => {
     const video = videoRef.current;

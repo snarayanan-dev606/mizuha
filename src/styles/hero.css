@@ -17,6 +17,8 @@
   overflow: hidden;
   z-index: 1;
   background: #07090c;
+  transform: translateZ(0);
+  contain: layout paint;
 }
 
 .hero-bg-video {
@@ -25,7 +27,8 @@
   object-fit: cover;
   object-position: center center;
   display: block;
-  filter: brightness(0.92) contrast(1.05);
+  transform: translateZ(0);
+  backface-visibility: hidden;
   will-change: transform;
 }
 
@@ -81,6 +84,7 @@
   color: #ffffff;
   margin-bottom: 1.75rem;
   letter-spacing: -0.02em;
+  text-wrap: balance;
 }
 
 .hero-headline span.highlight {
@@ -98,6 +102,7 @@
   margin-bottom: 2.5rem;
   max-width: 52ch;
   line-height: 1.5;
+  text-wrap: pretty;
 }
 
 .hero-subline span {
